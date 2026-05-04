@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { PricePositionBar } from './PricePositionBar'
 import { DVFChart } from './DVFChart'
+import { LMNPSection } from './LMNPSection'
 import { formatPrice, formatPriceM2, formatPct, daysSince } from '@/lib/utils'
 import type { PropertyData, DVFAnalysisResult } from '@/types'
 
@@ -131,6 +132,16 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
           </CardContent>
         </Card>
       )}
+
+      {/* Rentabilité LMNP */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Rentabilité LMNP meublé</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LMNPSection property={property} />
+        </CardContent>
+      </Card>
 
       <Separator />
 
