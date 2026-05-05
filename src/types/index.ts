@@ -142,6 +142,26 @@ export interface Opportunity {
   createdAt?: string
 }
 
+// ─── Scoring quartier ─────────────────────────────────────────────────────────
+
+export interface QuartierAxe {
+  /** Score 1–5 */
+  score: number
+  justification: string
+}
+
+export interface QuartierScore {
+  transports: QuartierAxe
+  commerces: QuartierAxe
+  ecoles: QuartierAxe
+  securite: QuartierAxe
+  dynamiqueImmo: QuartierAxe
+  /** Somme des 5 scores, max 25 */
+  total: number
+  /** Synthèse textuelle du quartier */
+  synthese: string
+}
+
 // ─── États de l'interface ─────────────────────────────────────────────────────
 
 export type AnalysisStep =

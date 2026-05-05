@@ -49,3 +49,6 @@ inspector_port = 8083
 
 [functions.extract-listing]
 verify_jwt = false
+
+[functions.score-quartier]
+verify_jwt = false

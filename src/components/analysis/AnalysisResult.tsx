@@ -7,6 +7,7 @@ import { PricePositionBar } from './PricePositionBar'
 import { DVFChart } from './DVFChart'
 import { LMNPSection } from './LMNPSection'
 import { NegociationSection } from './NegociationSection'
+import { QuartierSection } from './QuartierSection'
 import { formatPrice, formatPriceM2, formatPct, daysSince } from '@/lib/utils'
 import type { PropertyData, DVFAnalysisResult } from '@/types'
 
@@ -141,6 +142,16 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
         </CardHeader>
         <CardContent>
           <LMNPSection property={property} />
+        </CardContent>
+      </Card>
+
+      {/* Score quartier */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Score quartier</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <QuartierSection property={property} />
         </CardContent>
       </Card>
 
