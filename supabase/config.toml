@@ -52,3 +52,6 @@ verify_jwt = false
 
 [functions.score-quartier]
 verify_jwt = false
+
+[functions.daily-scraper]
+verify_jwt = false
