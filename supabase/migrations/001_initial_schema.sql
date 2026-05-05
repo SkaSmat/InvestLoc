@@ -5,7 +5,7 @@
 -- ─── search_profiles ──────────────────────────────────────────────────────────
 
 create table if not exists public.search_profiles (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   user_id       uuid references auth.users(id) on delete cascade,
   zones         text[]   not null default array['75','77','78','91','92','93','94','95'],
   budget_max    integer  not null default 200000,
@@ -27,7 +27,7 @@ create policy "Users manage own search profiles"
 -- ─── financial_settings ───────────────────────────────────────────────────────
 
 create table if not exists public.financial_settings (
-  id                  uuid primary key default uuid_generate_v4(),
+  id                  uuid primary key default gen_random_uuid(),
   user_id             uuid references auth.users(id) on delete cascade,
   taux_credit         numeric(5,2) not null default 3.3,
   taux_assurance      numeric(5,3) not null default 0.1,
@@ -48,7 +48,7 @@ create policy "Users manage own financial settings"
 -- ─── listings ────────────────────────────────────────────────────────────────
 
 create table if not exists public.listings (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   user_id       uuid references auth.users(id) on delete set null,
   url           text        not null,
   title         text,
@@ -76,7 +76,7 @@ create policy "Users manage own listings"
 -- ─── opportunities ────────────────────────────────────────────────────────────
 
 create table if not exists public.opportunities (
-  id                  uuid primary key default uuid_generate_v4(),
+  id                  uuid primary key default gen_random_uuid(),
   listing_url         text         not null,
   title               text,
   price               integer,
