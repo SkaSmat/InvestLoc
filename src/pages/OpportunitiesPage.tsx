@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { ExternalLink, RefreshCw, TrendingUp, Trophy, AlertCircle, Clock } from 'lucide-react'
+import { ExternalLink, RefreshCw, TrendingUp, Trophy, AlertCircle, Clock, Play } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
-import { getOpportunities } from '@/lib/supabase'
+import { getOpportunities, supabase } from '@/lib/supabase'
 import { formatPrice, formatPct } from '@/lib/utils'
 import type { Opportunity } from '@/types'
 
@@ -125,6 +125,8 @@ function OpportunityCard({ opp }: { opp: Opportunity }) {
 export function OpportunitiesPage() {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [loading, setLoading] = useState(true)
+  const [scraping, setScraping] = useState(false)
+  const [scrapeStatus, setScrapeStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function load() {
@@ -140,6 +142,23 @@ export function OpportunitiesPage() {
     }
   }
 
+  async function runScraper() {
+    setScraping(true)
+    setScrapeStatus('Recherche en cours… (peut prendre 1-2 min)')
+    setError(null)
+    try {
+      const { data, error } = await supabase.functions.invoke('daily-scraper', { body: {} })
+      if (error) throw error
+      setScrapeStatus(`Terminé — ${data?.totalSaved ?? 0} opportunité(s) sauvegardée(s)`)
+      await load()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du scraping')
+      setScrapeStatus(null)
+    } finally {
+      setScraping(false)
+    }
+  }
+
   useEffect(() => { load() }, [])
 
   const top = opportunities.filter((o) => o.scoreTotal >= 70)
@@ -152,14 +171,27 @@ export function OpportunitiesPage() {
         <div>
           <h1 className="text-2xl font-bold mb-1">Opportunités</h1>
           <p className="text-muted-foreground text-sm">
-            Biens détectés automatiquement chaque matin — score ≥ 60/100
+            Biens détectés — score ≥ 60/100
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading} className="gap-2">
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Actualiser
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={load} disabled={loading || scraping} className="gap-2">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualiser
+          </Button>
+          <Button size="sm" onClick={runScraper} disabled={scraping || loading} className="gap-2">
+            <Play className={`h-4 w-4 ${scraping ? 'animate-pulse' : ''}`} />
+            {scraping ? 'Recherche…' : 'Lancer le scraping'}
+          </Button>
+        </div>
       </div>
+
+      {scrapeStatus && (
+        <div className="text-sm text-muted-foreground bg-muted/40 rounded-md px-4 py-2">
+          {scrapeStatus}
+        </div>
+      )}
+
 
       {/* Erreur */}
       {error && (
@@ -187,14 +219,10 @@ export function OpportunitiesPage() {
               Aucune opportunité pour l'instant
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground space-y-2">
+          <CardContent className="text-sm text-muted-foreground">
             <p>
-              Le chasseur automatique tourne chaque matin à 7h. Les biens avec un score ≥ 60/100
-              apparaissent ici.
-            </p>
-            <p className="text-xs">
-              Pour déclencher une recherche manuellement, appelez la Edge Function{' '}
-              <code className="bg-muted px-1 rounded">daily-scraper</code> depuis le dashboard Supabase.
+              Cliquez sur <strong>Lancer le scraping</strong> pour rechercher des biens maintenant.
+              Les résultats avec un score ≥ 60/100 apparaissent ici.
             </p>
           </CardContent>
         </Card>
