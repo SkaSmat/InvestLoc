@@ -17,7 +17,7 @@ alter table public.opportunities
 -- ─── Table scraper_runs (historique des exécutions) ──────────────────────────
 
 create table if not exists public.scraper_runs (
-  id           uuid primary key default uuid_generate_v4(),
+  id           uuid primary key default gen_random_uuid(),
   started_at   timestamptz not null default now(),
   finished_at  timestamptz,
   total_found  integer default 0,
