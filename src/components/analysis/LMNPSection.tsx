@@ -11,6 +11,7 @@ import type { FinancialSettings, LMNPResult, PropertyData } from '@/types'
 
 interface LMNPSectionProps {
   property: PropertyData
+  onResultChange?: (result: LMNPResult, loyer: number, apport: number, travaux: number) => void
 }
 
 function CashflowBadge({ value }: { value: number }) {
@@ -100,7 +101,7 @@ function RegimeColumn({
   )
 }
 
-export function LMNPSection({ property }: LMNPSectionProps) {
+export function LMNPSection({ property, onResultChange }: LMNPSectionProps) {
   const [settings, setSettings] = useState<FinancialSettings | null>(null)
   const [loyer, setLoyer] = useState<number>(() => Math.round(property.surface * 18))
   const [apport, setApport] = useState<number>(20000)
@@ -128,6 +129,7 @@ export function LMNPSection({ property }: LMNPSectionProps) {
       tmi: settings.tmi,
     })
     setResult(res)
+    onResultChange?.(res, loyer, apport, travaux)
   }, [settings, loyer, apport, travaux, property])
 
   if (!settings || !result) {

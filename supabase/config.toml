@@ -55,3 +55,6 @@ verify_jwt = false
 
 [functions.daily-scraper]
 verify_jwt = false
+
+[functions.chat-analysis]
+verify_jwt = false

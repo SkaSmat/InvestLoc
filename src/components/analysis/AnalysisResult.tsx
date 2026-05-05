@@ -1,4 +1,5 @@
-import { ExternalLink, TrendingDown, TrendingUp, Minus, MapPin, Calendar } from 'lucide-react'
+import { useState, useCallback } from 'react'
+import { ExternalLink, TrendingDown, TrendingUp, Minus, MapPin, Calendar, MessageSquare } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -8,8 +9,16 @@ import { DVFChart } from './DVFChart'
 import { LMNPSection } from './LMNPSection'
 import { NegociationSection } from './NegociationSection'
 import { QuartierSection } from './QuartierSection'
+import { ChatSection } from './ChatSection'
 import { formatPrice, formatPriceM2, formatPct, daysSince } from '@/lib/utils'
-import type { PropertyData, DVFAnalysisResult } from '@/types'
+import type { PropertyData, DVFAnalysisResult, LMNPResult } from '@/types'
+
+interface LMNPContext {
+  loyer: number
+  apport: number
+  travaux: number
+  result: LMNPResult
+}
 
 interface AnalysisResultProps {
   property: PropertyData
@@ -49,6 +58,14 @@ const conditionLabels: Record<PropertyData['condition'], string> = {
 
 export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) {
   const prixM2 = Math.round(property.price / property.surface)
+  const [lmnpContext, setLmnpContext] = useState<LMNPContext | null>(null)
+
+  const handleLMNPChange = useCallback(
+    (result: LMNPResult, loyer: number, apport: number, travaux: number) => {
+      setLmnpContext({ result, loyer, apport, travaux })
+    },
+    []
+  )
 
   return (
     <div className="space-y-6">
@@ -93,7 +110,9 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
           <CardContent className="pt-4 pb-4">
             <p className="text-xs text-muted-foreground">Surface</p>
             <p className="text-2xl font-bold">{property.surface} m²</p>
-            <p className="text-sm text-muted-foreground">{property.rooms} pièce{property.rooms > 1 ? 's' : ''}</p>
+            <p className="text-sm text-muted-foreground">
+              {property.rooms} pièce{property.rooms > 1 ? 's' : ''}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -141,7 +160,7 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
           <CardTitle className="text-base">Rentabilité LMNP meublé</CardTitle>
         </CardHeader>
         <CardContent>
-          <LMNPSection property={property} />
+          <LMNPSection property={property} onResultChange={handleLMNPChange} />
         </CardContent>
       </Card>
 
@@ -162,6 +181,19 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
         </CardHeader>
         <CardContent>
           <NegociationSection property={property} dvf={dvf} />
+        </CardContent>
+      </Card>
+
+      {/* Chat conversationnel */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Discuter avec l'IA
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ChatSection property={property} dvf={dvf} lmnpContext={lmnpContext} />
         </CardContent>
       </Card>
 
