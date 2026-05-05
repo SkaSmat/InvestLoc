@@ -2,9 +2,6 @@
 -- ImmoAgent — Schéma initial
 -- ============================================================
 
--- Extensions
-create extension if not exists "uuid-ossp";
-
 -- ─── search_profiles ──────────────────────────────────────────────────────────
 
 create table if not exists public.search_profiles (
