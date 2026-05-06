@@ -78,20 +78,22 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Fetch via Jina AI Reader — contourne les protections anti-bot (SeLoger, LBC, etc.)
-    const jinaUrl = `https://r.jina.ai/${url}`
-    const pageRes = await fetch(jinaUrl, {
-      headers: {
-        'Accept': 'text/plain',
-        'X-No-Cache': 'true',
-      },
-    })
+    // Fetch via ScrapingBee — exécute le JS comme un vrai navigateur
+    const scrapingBeeKey = Deno.env.get('SCRAPINGBEE_API_KEY')
+    const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?api_key=${scrapingBeeKey}&url=${encodeURIComponent(url)}&render_js=true&block_ads=true`
+    const pageRes = await fetch(scrapingBeeUrl)
 
     if (!pageRes.ok) {
-      throw new Error(`Impossible de recuperer l'annonce via Jina (HTTP ${pageRes.status})`)
+      throw new Error(`Impossible de recuperer l'annonce via ScrapingBee (HTTP ${pageRes.status})`)
     }
 
-    const text = (await pageRes.text()).slice(0, 15000)
+    const html = await pageRes.text()
+    const text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .slice(0, 15000)
 
     // Appel Claude avec tool_use — anti-hallucination
     const response = await client.messages.create({
