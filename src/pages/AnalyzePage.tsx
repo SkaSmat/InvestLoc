@@ -42,7 +42,7 @@ export function AnalyzePage() {
       setState((s) => ({
         ...s,
         step: 'url_input',
-        error: err instanceof Error ? err.message : 'Erreur lors de l'extraction',
+        error: err instanceof Error ? err.message : "Erreur lors de l'extraction",
       }))
     }
   }
@@ -61,7 +61,7 @@ export function AnalyzePage() {
       setState((s) => ({
         ...s,
         step: 'form',
-        error: err instanceof Error ? err.message : 'Erreur lors de l'analyse DVF',
+        error: err instanceof Error ? err.message : "Erreur lors de l'analyse DVF",
       }))
     }
   }

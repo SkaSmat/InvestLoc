@@ -94,8 +94,8 @@ function scoreEtat(condition: PropertyData['condition']): NegociationFactor {
   const map: Record<PropertyData['condition'], { score: number; detail: string }> = {
     travaux: { score: 30, detail: 'Travaux à prévoir — argument fort pour décote' },
     moyen: { score: 18, detail: 'État moyen — remise pour remise à niveau' },
-    bon: { score: 5, detail: 'Bon état — peu de marge sur l'état' },
-    neuf: { score: 0, detail: 'Bien neuf / rénové — aucun argument sur l'état' },
+    bon: { score: 5, detail: "Bon état — peu de marge sur l'état" },
+    neuf: { score: 0, detail: "Bien neuf / rénové — aucun argument sur l'état" },
   }
   const { score, detail } = map[condition]
   return { label: 'État du bien', score, maxScore: 30, detail }

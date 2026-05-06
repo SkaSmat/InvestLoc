@@ -148,7 +148,7 @@ export function PropertyForm({ initialData, onSubmit, isLoading = false }: Prope
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Analyse en cours…' : 'Lancer l'analyse DVF + LMNP'}
+            {isLoading ? "Analyse en cours…" : "Lancer l'analyse DVF + LMNP"}
           </Button>
         </form>
       </CardContent>
