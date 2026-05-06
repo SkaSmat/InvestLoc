@@ -9,7 +9,7 @@ import { DVFChart } from './DVFChart'
 import { LMNPSection } from './LMNPSection'
 import { NegociationSection } from './NegociationSection'
 import { QuartierSection } from './QuartierSection'
-import { ChatSection } from './ChatSection'
+import { AgentChat } from './AgentChat'
 import { formatPrice, formatPriceM2, formatPct, daysSince } from '@/lib/utils'
 import type { PropertyData, DVFAnalysisResult, LMNPResult } from '@/types'
 
@@ -189,11 +189,11 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
-            Discuter avec l'IA
+            Analyse multi-agent
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ChatSection property={property} dvf={dvf} lmnpContext={lmnpContext} />
+          <AgentChat property={property} dvf={dvf} lmnpContext={lmnpContext} />
         </CardContent>
       </Card>
 

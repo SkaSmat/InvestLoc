@@ -162,6 +162,29 @@ export interface QuartierScore {
   synthese: string
 }
 
+// ─── Négociation ─────────────────────────────────────────────────────────────
+
+export interface NegociationResult {
+  potentiel: 'faible' | 'modéré' | 'élevé'
+  scoreTotal: number
+  offreRecommandee: number
+  offreBasse: number
+  remisePct: number
+  arguments: string[]
+}
+
+// ─── Multi-agent chat ─────────────────────────────────────────────────────────
+
+export type AgentType = 'marche' | 'rentabilite' | 'risque'
+
+export interface AgentMessage {
+  role: 'user' | 'assistant'
+  content: string
+  /** Agents mobilisés pour produire cette réponse */
+  agents?: AgentType[]
+  timestamp: number
+}
+
 // ─── États de l'interface ─────────────────────────────────────────────────────
 
 export type AnalysisStep =
