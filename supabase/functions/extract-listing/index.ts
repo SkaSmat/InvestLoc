@@ -78,26 +78,20 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Fetch de la page annonce
-    const pageRes = await fetch(url, {
+    // Fetch via Jina AI Reader — contourne les protections anti-bot (SeLoger, LBC, etc.)
+    const jinaUrl = `https://r.jina.ai/${url}`
+    const pageRes = await fetch(jinaUrl, {
       headers: {
-        'User-Agent':
-          'Mozilla/5.0 (compatible; ImmoAgent/1.0; +https://github.com/SkaSmat/InvestLoc)',
+        'Accept': 'text/plain',
+        'X-No-Cache': 'true',
       },
     })
 
     if (!pageRes.ok) {
-      throw new Error(`Impossible de récupérer l'annonce (HTTP ${pageRes.status})`)
+      throw new Error(`Impossible de recuperer l'annonce via Jina (HTTP ${pageRes.status})`)
     }
 
-    // Extraction du texte brut (strip HTML basique)
-    const html = await pageRes.text()
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .slice(0, 12000) // 12k chars suffisent largement + économie tokens
+    const text = (await pageRes.text()).slice(0, 15000)
 
     // Appel Claude avec tool_use — anti-hallucination
     const response = await client.messages.create({
