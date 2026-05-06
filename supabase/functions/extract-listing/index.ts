@@ -17,11 +17,11 @@ const client = new Anthropic({
 const extractTool: Anthropic.Tool = {
   name: 'extract_property',
   description:
-    'Extrait les données structurées d'une annonce immobilière depuis son contenu textuel.',
+    "Extrait les donnees structurees d'une annonce immobiliere depuis son contenu textuel.",
   input_schema: {
     type: 'object' as const,
     properties: {
-      title: { type: 'string', description: 'Titre de l'annonce' },
+      title: { type: 'string', description: "Titre de l'annonce" },
       price: { type: 'number', description: 'Prix FAI en euros' },
       surface: { type: 'number', description: 'Surface habitable en m²' },
       rooms: { type: 'integer', description: 'Nombre de pièces' },
@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
     // Récupérer le résultat de l'outil
     const toolUse = response.content.find((b) => b.type === 'tool_use')
     if (!toolUse || toolUse.type !== 'tool_use') {
-      throw new Error('Claude n'a pas retourné de résultat structuré')
+      throw new Error("Claude n'a pas retourne de resultat structure")
     }
 
     const propertyData = { ...(toolUse.input as Record<string, unknown>), url }
