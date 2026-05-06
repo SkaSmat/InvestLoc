@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { AlertCircle } from 'lucide-react'
 import { UrlInput } from '@/components/analysis/UrlInput'
 import { PropertyForm } from '@/components/analysis/PropertyForm'
@@ -31,7 +32,15 @@ function LoadingState({ message }: { message: string }) {
 }
 
 export function AnalyzePage() {
-  const [state, setState] = useState<AnalysisState>(INITIAL_STATE)
+  const location = useLocation()
+  const prefilled = location.state as { property: PropertyData; dvf: ReturnType<typeof fetchDVFStats> extends Promise<infer T> ? T : never } | null
+
+  const [state, setState] = useState<AnalysisState>(() => {
+    if (prefilled?.property && prefilled?.dvf) {
+      return { ...INITIAL_STATE, step: 'results', property: prefilled.property, dvf: prefilled.dvf as AnalysisState['dvf'] }
+    }
+    return INITIAL_STATE
+  })
 
   async function handleUrlSubmit(url: string) {
     setState({ ...INITIAL_STATE, step: 'extracting', url })

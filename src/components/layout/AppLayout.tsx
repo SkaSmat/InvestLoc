@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom'
-import { BarChart3, Search, Settings, Building2 } from 'lucide-react'
+import { BarChart3, Search, Settings, Building2, ScanSearch } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { to: '/', label: 'Analyser', icon: Search, end: true },
+  { to: '/', label: 'Analyser URL', icon: Search, end: true },
+  { to: '/search', label: 'Rechercher', icon: ScanSearch },
   { to: '/opportunities', label: 'Opportunités', icon: BarChart3 },
   { to: '/settings', label: 'Paramètres', icon: Settings },
 ]
