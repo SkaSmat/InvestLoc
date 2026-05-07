@@ -4,13 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { computeLMNP } from '@/lib/mortgage'
+import { computeLMNP, computeTRI, computeRiskScore } from '@/lib/mortgage'
 import { DEFAULT_FINANCIAL_SETTINGS } from '@/lib/supabase'
 import { formatPrice, formatPct } from '@/lib/utils'
-import type { FinancialSettings, LMNPResult, PropertyData } from '@/types'
+import { RiskScoreCard } from './RiskScoreCard'
+import type { DVFAnalysisResult, FinancialSettings, LMNPResult, PropertyData, RiskScore } from '@/types'
 
 interface LMNPSectionProps {
   property: PropertyData
+  dvf?: DVFAnalysisResult | null
   onResultChange?: (result: LMNPResult, loyer: number, apport: number, travaux: number) => void
 }
 
@@ -101,17 +103,19 @@ function RegimeColumn({
   )
 }
 
-export function LMNPSection({ property, onResultChange }: LMNPSectionProps) {
+export function LMNPSection({ property, dvf, onResultChange }: LMNPSectionProps) {
   const [settings, setSettings] = useState<FinancialSettings>(DEFAULT_FINANCIAL_SETTINGS)
   const [loyer, setLoyer] = useState<number>(() => Math.round(property.surface * 18))
   const [apport, setApport] = useState<number>(20000)
   const [travaux, setTravaux] = useState<number>(0)
   const [result, setResult] = useState<LMNPResult | null>(null)
+  const [tri, setTri] = useState<number>(0)
+  const [riskScore, setRiskScore] = useState<RiskScore | null>(null)
 
   // Recalcul temps réel à chaque changement
   useEffect(() => {
     if (!settings) return
-    const res = computeLMNP({
+    const lmnpInput = {
       prixFAI: property.price,
       surface: property.surface,
       loyerMensuel: loyer,
@@ -122,10 +126,19 @@ export function LMNPSection({ property, onResultChange }: LMNPSectionProps) {
       tauxAssurance: settings.tauxAssurance,
       fraisNotairesPct: settings.fraisNotairesPct,
       tmi: settings.tmi,
-    })
+    }
+    const res = computeLMNP(lmnpInput)
     setResult(res)
     onResultChange?.(res, loyer, apport, travaux)
-  }, [settings, loyer, apport, travaux, property])
+
+    // TRI & risk score
+    const bestCf = Math.max(res.microBIC.cashflowMensuel, res.reel.cashflowMensuel)
+    const tendance = dvf?.tendance ?? 1.2
+    const triVal = computeTRI({ ...lmnpInput, cashflowMensuelNet: bestCf }, tendance)
+    setTri(triVal)
+    const riskVal = computeRiskScore(lmnpInput, res, dvf?.ecartPourcent ?? 0, tendance)
+    setRiskScore(riskVal)
+  }, [settings, loyer, apport, travaux, property, dvf])
 
   if (!result) {
     return (
@@ -273,6 +286,9 @@ export function LMNPSection({ property, onResultChange }: LMNPSectionProps) {
           </div>
         </div>
       </div>
+
+      {/* Score de risque + TRI */}
+      {riskScore && <RiskScoreCard risk={riskScore} tri={tri} />}
 
       {/* Coût crédit */}
       <div className="flex items-center justify-between text-sm text-muted-foreground border-t pt-4">

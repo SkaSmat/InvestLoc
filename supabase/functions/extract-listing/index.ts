@@ -78,24 +78,70 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Fetch via ScrapingBee avec proxy premium (contourne SeLoger, LBC, PAP)
-    const scrapingBeeKey = Deno.env.get('SCRAPINGBEE_API_KEY')
-    const params = new URLSearchParams({
-      api_key: scrapingBeeKey ?? '',
-      url,
-      render_js: 'true',
-      premium_proxy: 'true',
-      country_code: 'fr',
-      block_ads: 'true',
-      wait: '2000',
-    })
-    const pageRes = await fetch(`https://app.scrapingbee.com/api/v1/?${params}`)
+    // ── Scraping tiered : direct → Jina AI (gratuit) → ScrapingBee (payant) ──
+    let html = ''
+    let scraperUsed = 'direct'
 
-    if (!pageRes.ok) {
-      throw new Error(`Impossible de recuperer l'annonce via ScrapingBee (HTTP ${pageRes.status})`)
+    // Tier 1 : fetch direct (fonctionne sur PAP, certains sites sans protection)
+    try {
+      const directRes = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'fr-FR,fr;q=0.9',
+        },
+        signal: AbortSignal.timeout(8000),
+      })
+      if (directRes.ok) {
+        const raw = await directRes.text()
+        // Vérifie qu'on n'a pas eu un CAPTCHA / page de blocage (< 500 mots utiles = suspect)
+        const stripped = raw.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ')
+        if (stripped.split(' ').length > 300) {
+          html = raw
+          scraperUsed = 'direct'
+        }
+      }
+    } catch { /* passe au niveau suivant */ }
+
+    // Tier 2 : Jina AI Reader (gratuit, 200 req/jour, bon pour pages statiques)
+    if (!html) {
+      try {
+        const jinaRes = await fetch(`https://r.jina.ai/${encodeURIComponent(url)}`, {
+          headers: { 'Accept': 'text/html', 'X-Return-Format': 'html' },
+          signal: AbortSignal.timeout(10000),
+        })
+        if (jinaRes.ok) {
+          const raw = await jinaRes.text()
+          const stripped = raw.replace(/<[^>]+>/g, ' ').replace(/\s{2,}/g, ' ')
+          if (stripped.split(' ').length > 300) {
+            html = raw
+            scraperUsed = 'jina'
+          }
+        }
+      } catch { /* passe au niveau suivant */ }
     }
 
-    const html = await pageRes.text()
+    // Tier 3 : ScrapingBee premium (JS rendering, proxy résidentiel — coûte des crédits)
+    if (!html) {
+      const scrapingBeeKey = Deno.env.get('SCRAPINGBEE_API_KEY')
+      const params = new URLSearchParams({
+        api_key: scrapingBeeKey ?? '',
+        url,
+        render_js: 'true',
+        premium_proxy: 'true',
+        country_code: 'fr',
+        block_ads: 'true',
+        wait: '2000',
+      })
+      const pageRes = await fetch(`https://app.scrapingbee.com/api/v1/?${params}`)
+      if (!pageRes.ok) {
+        throw new Error(`Impossible de recuperer l'annonce (ScrapingBee HTTP ${pageRes.status})`)
+      }
+      html = await pageRes.text()
+      scraperUsed = 'scrapingbee'
+    }
+
+    console.log(`Scraper used: ${scraperUsed} for ${url}`)
     const text = html
       .replace(/<script[\s\S]*?<\/script>/gi, '')
       .replace(/<style[\s\S]*?<\/style>/gi, '')

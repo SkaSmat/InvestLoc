@@ -93,6 +93,21 @@ export interface LMNPResult {
   amortissementTotal: number
 }
 
+// ─── Score de risque ──────────────────────────────────────────────────────────
+
+export interface RiskCriterion {
+  label: string
+  score: number
+  max: number
+  detail: string
+}
+
+export interface RiskScore {
+  total: number
+  niveau: 'faible' | 'modéré' | 'élevé'
+  criteria: RiskCriterion[]
+}
+
 // ─── Profil de chasse ─────────────────────────────────────────────────────────
 
 export interface SearchProfile {

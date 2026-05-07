@@ -44,7 +44,14 @@ async function callSubAgent(
   const response = await claude.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 800,
-    system: AGENT_PROMPTS[agentType],
+    // cache_control on system prompt — static text ≥1024 tokens qualifies for caching
+    system: [
+      {
+        type: 'text',
+        text: AGENT_PROMPTS[agentType],
+        cache_control: { type: 'ephemeral' },
+      },
+    ],
     messages: [
       {
         role: 'user',
@@ -108,13 +115,24 @@ Deno.serve(async (req) => {
       context: unknown
     }
 
-    const supervisorSystem = `Tu es le Superviseur d'InvestLoc, un système multi-agent d'analyse d'investissement locatif.
+    const supervisorSystemStatic = `Tu es le Superviseur d'InvestLoc, un système multi-agent d'analyse d'investissement locatif.
 Tu reçois des questions d'investisseurs sur un bien immobilier et tu orchestres des agents spécialisés.
 Pour chaque question, identifie quels agents sont nécessaires et appelle les outils correspondants.
 Tu peux appeler plusieurs agents si la question est complexe ou touche plusieurs domaines.
 Après avoir reçu les réponses des agents, synthétise-les en une réponse claire, structurée et actionnable.
-Ne mentionne pas les noms techniques des agents dans ta réponse finale.
-Contexte du bien : ${JSON.stringify(context)}`
+Ne mentionne pas les noms techniques des agents dans ta réponse finale.`
+
+    const supervisorSystem: Anthropic.TextBlockParam[] = [
+      {
+        type: 'text',
+        text: supervisorSystemStatic,
+        cache_control: { type: 'ephemeral' },
+      },
+      {
+        type: 'text',
+        text: `Contexte du bien : ${JSON.stringify(context)}`,
+      },
+    ]
 
     // First supervisor pass: classify and dispatch
     const supervisorResponse = await claude.messages.create({
@@ -156,7 +174,7 @@ Contexte du bien : ${JSON.stringify(context)}`
     const finalResponse = await claude.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
-      system: supervisorSystem,
+      system: supervisorSystem as Anthropic.TextBlockParam[],
       tools: SUPERVISOR_TOOLS,
       messages: [
         ...messages.map((m) => ({ role: m.role, content: m.content })),

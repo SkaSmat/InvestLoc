@@ -160,7 +160,7 @@ export function AnalysisResult({ property, dvf, onReset }: AnalysisResultProps) 
           <CardTitle className="text-base">Rentabilité LMNP meublé</CardTitle>
         </CardHeader>
         <CardContent>
-          <LMNPSection property={property} onResultChange={handleLMNPChange} />
+          <LMNPSection property={property} dvf={dvf} onResultChange={handleLMNPChange} />
         </CardContent>
       </Card>
 
