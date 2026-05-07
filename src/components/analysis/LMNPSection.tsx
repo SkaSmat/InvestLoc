@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { computeLMNP } from '@/lib/mortgage'
-import { getFinancialSettings } from '@/lib/supabase'
+import { DEFAULT_FINANCIAL_SETTINGS } from '@/lib/supabase'
 import { formatPrice, formatPct } from '@/lib/utils'
 import type { FinancialSettings, LMNPResult, PropertyData } from '@/types'
 
@@ -102,16 +102,11 @@ function RegimeColumn({
 }
 
 export function LMNPSection({ property, onResultChange }: LMNPSectionProps) {
-  const [settings, setSettings] = useState<FinancialSettings | null>(null)
+  const [settings, setSettings] = useState<FinancialSettings>(DEFAULT_FINANCIAL_SETTINGS)
   const [loyer, setLoyer] = useState<number>(() => Math.round(property.surface * 18))
   const [apport, setApport] = useState<number>(20000)
   const [travaux, setTravaux] = useState<number>(0)
   const [result, setResult] = useState<LMNPResult | null>(null)
-
-  // Chargement des paramètres financiers (Supabase ou défauts)
-  useEffect(() => {
-    getFinancialSettings().then(setSettings)
-  }, [])
 
   // Recalcul temps réel à chaque changement
   useEffect(() => {
@@ -132,7 +127,7 @@ export function LMNPSection({ property, onResultChange }: LMNPSectionProps) {
     onResultChange?.(res, loyer, apport, travaux)
   }, [settings, loyer, apport, travaux, property])
 
-  if (!settings || !result) {
+  if (!result) {
     return (
       <div className="h-40 flex items-center justify-center text-sm text-muted-foreground">
         Chargement des paramètres financiers…
