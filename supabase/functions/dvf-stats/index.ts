@@ -1,5 +1,3 @@
-import { createClient } from 'npm:@supabase/supabase-js'
-
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -7,8 +5,10 @@ const cors = {
 
 interface DVFMutation {
   date_mutation: string
-  valeur_fonciere: string
-  surface_reelle_bati: string
+  valeur_fonciere: number
+  surface_reelle_bati: number
+  type_local: string
+  nature_mutation: string
 }
 
 function median(values: number[]): number {
@@ -48,54 +48,41 @@ function computeTendance(transactions: { date: string; prixM2: number }[]): numb
   return Math.round(((slope * 4) / yMean) * 1000) / 10
 }
 
-async function getCodeInsee(codePostal: string, city: string): Promise<string> {
-  const url = `https://geo.api.gouv.fr/communes?codePostal=${codePostal}&fields=code,nom&format=json`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`Geo API error: ${res.status}`)
-  const communes = await res.json()
-  if (!communes.length) throw new Error(`Commune introuvable pour ${codePostal}`)
-  if (communes.length === 1) return communes[0].code
-  const normalized = city.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-  const match = communes.find((c: { nom: string }) =>
-    c.nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(normalized)
-  )
-  return (match ?? communes[0]).code
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
 
   try {
     const { codePostal, city, surface, prixAnnonce } = await req.json()
 
-    const codeInsee = await getCodeInsee(codePostal, city)
+    // api.cquest.org/dvf - community DVF API, free, no auth required
+    const url = `https://api.cquest.org/dvf?code_postal=${codePostal}&type_local=Appartement&nature_mutation=Vente`
 
-    const url = `https://api.dvf.etalab.gouv.fr/geoapi/mutations?` +
-      `code_commune=${codeInsee}&nature_mutation=Vente&type_local=Appartement&` +
-      `fields=date_mutation,valeur_fonciere,surface_reelle_bati`
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json', 'User-Agent': 'InvestLoc/1.0' },
+      signal: AbortSignal.timeout(10000),
+    })
 
-    const res = await fetch(url)
     if (!res.ok) throw new Error(`DVF API error: ${res.status}`)
 
     const json = await res.json()
     const mutations: DVFMutation[] = json.features
       ? json.features.map((f: { properties: DVFMutation }) => f.properties)
-      : json
+      : (Array.isArray(json) ? json : json.resultats ?? [])
 
     const surfaceMin = surface * 0.5
     const surfaceMax = surface * 2.0
 
     const transactions = mutations
       .filter((m) => {
-        const s = parseFloat(m.surface_reelle_bati)
-        const p = parseFloat(m.valeur_fonciere)
+        const s = Number(m.surface_reelle_bati)
+        const p = Number(m.valeur_fonciere)
         return s >= surfaceMin && s <= surfaceMax && p > 10000 && p < 5000000
       })
       .map((m) => ({
         date: m.date_mutation,
-        prix: parseFloat(m.valeur_fonciere),
-        surface: parseFloat(m.surface_reelle_bati),
-        prixM2: Math.round(parseFloat(m.valeur_fonciere) / parseFloat(m.surface_reelle_bati)),
+        prix: Number(m.valeur_fonciere),
+        surface: Number(m.surface_reelle_bati),
+        prixM2: Math.round(Number(m.valeur_fonciere) / Number(m.surface_reelle_bati)),
       }))
 
     if (transactions.length === 0) {
@@ -111,7 +98,7 @@ Deno.serve(async (req) => {
     const ecartPourcent = Math.round(((prixM2Annonce - med) / med) * 1000) / 10
 
     return new Response(
-      JSON.stringify({ codeInsee, mediane: med, p10, p90, tendance, ecartPourcent, transactions, nbTransactions: transactions.length }),
+      JSON.stringify({ codeInsee: codePostal, mediane: med, p10, p90, tendance, ecartPourcent, transactions, nbTransactions: transactions.length }),
       { headers: { ...cors, 'Content-Type': 'application/json' } }
     )
   } catch (err) {
