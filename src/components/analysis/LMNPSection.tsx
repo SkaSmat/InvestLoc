@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { computeLMNP, computeTRI, computeRiskScore } from '@/lib/mortgage'
 import { DEFAULT_FINANCIAL_SETTINGS } from '@/lib/supabase'
+import { estimateLoyer } from '@/lib/loyer'
 import { formatPrice, formatPct } from '@/lib/utils'
 import { RiskScoreCard } from './RiskScoreCard'
 import type { DVFAnalysisResult, FinancialSettings, LMNPResult, PropertyData, RiskScore } from '@/types'
@@ -105,7 +106,7 @@ function RegimeColumn({
 
 export function LMNPSection({ property, dvf, onResultChange }: LMNPSectionProps) {
   const [settings, setSettings] = useState<FinancialSettings>(DEFAULT_FINANCIAL_SETTINGS)
-  const [loyer, setLoyer] = useState<number>(() => Math.round(property.surface * 18))
+  const [loyer, setLoyer] = useState<number>(() => estimateLoyer(property.surface, property.postalCode))
   const [apport, setApport] = useState<number>(20000)
   const [travaux, setTravaux] = useState<number>(0)
   const [result, setResult] = useState<LMNPResult | null>(null)
