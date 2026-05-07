@@ -78,10 +78,18 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Fetch via ScrapingBee — exécute le JS comme un vrai navigateur
+    // Fetch via ScrapingBee avec proxy premium (contourne SeLoger, LBC, PAP)
     const scrapingBeeKey = Deno.env.get('SCRAPINGBEE_API_KEY')
-    const scrapingBeeUrl = `https://app.scrapingbee.com/api/v1/?api_key=${scrapingBeeKey}&url=${encodeURIComponent(url)}&render_js=true&block_ads=true`
-    const pageRes = await fetch(scrapingBeeUrl)
+    const params = new URLSearchParams({
+      api_key: scrapingBeeKey ?? '',
+      url,
+      render_js: 'true',
+      premium_proxy: 'true',
+      country_code: 'fr',
+      block_ads: 'true',
+      wait: '2000',
+    })
+    const pageRes = await fetch(`https://app.scrapingbee.com/api/v1/?${params}`)
 
     if (!pageRes.ok) {
       throw new Error(`Impossible de recuperer l'annonce via ScrapingBee (HTTP ${pageRes.status})`)

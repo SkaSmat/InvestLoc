@@ -45,9 +45,20 @@ function buildLeBonCoinUrl(criteria: SearchCriteria): string {
 
 async function fetchWithScrapingBee(url: string): Promise<string> {
   const key = Deno.env.get('SCRAPINGBEE_API_KEY')
-  const apiUrl = `https://app.scrapingbee.com/api/v1/?api_key=${key}&url=${encodeURIComponent(url)}&render_js=true&block_ads=true&wait=2000`
-  const res = await fetch(apiUrl)
-  if (!res.ok) throw new Error(`ScrapingBee HTTP ${res.status}`)
+  const params = new URLSearchParams({
+    api_key: key ?? '',
+    url,
+    render_js: 'true',
+    premium_proxy: 'true',
+    country_code: 'fr',
+    block_ads: 'true',
+    wait: '3000',
+  })
+  const res = await fetch(`https://app.scrapingbee.com/api/v1/?${params}`)
+  if (!res.ok) {
+    const body = await res.text()
+    throw new Error(`ScrapingBee HTTP ${res.status}: ${body.slice(0, 200)}`)
+  }
   return res.text()
 }
 
